@@ -1,0 +1,41 @@
+
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR = 'src'
+        SONAR_PROJECT_KEY = 'java-maven-app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Maven Build and Test') {
+            steps {
+                dir("${APP_DIR}") {
+                    bat 'mvn clean verify'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${APP_DIR}") {
+                    withSonarQubeEnv('SonarQube') {
+                        bat 'mvn sonar:sonar -Dsonar.projectKey=%SONAR_PROJECT_KEY%'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline completed. Check stage results above.'
+        }
+    }
+}
